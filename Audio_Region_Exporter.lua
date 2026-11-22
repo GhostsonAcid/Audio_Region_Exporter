@@ -348,12 +348,6 @@ function factory() return function()
 
   end
 
-  local dropdown_solo_values = {}
-  local dropdown_solo_labels = {}
-
-  table.insert(dropdown_solo_values, "Option 1: Automatically solo a region's track")
-  table.insert(dropdown_solo_values, "Option 2: Do not solo a region's track")
-
   ----------------------------------------------------------------
   -------------- Step 4: Initiate Main Popup Window --------------
   ----------------------------------------------------------------
