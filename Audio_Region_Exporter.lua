@@ -19,28 +19,21 @@ function factory() return function()
     return "'" .. tostring(str):gsub("'", "'\\''") .. "'"
   end
 
-  -- Find the filename stems of files already in the export/destination folder:
-  local function get_existing_filename_stems(folder)
+  -- Generate a filename stem that does not already exist.
+  local function make_nonconflicting_name(folder, requested_name)
 
     local existing = {}
 
-    local command = "find "
-      .. shell_quote(folder)
-      .. " -maxdepth 1 -type f -print 2>/dev/null"
-
+    local command = "find " .. shell_quote(folder) .. " -maxdepth 1 -type f -print 2>/dev/null"
     local pipe = io.popen(command, "r")
 
     if not pipe then
-        return nil, "Could not scan the export folder."
+      return nil, "Could not scan the export folder."
     end
 
     for filepath in pipe:lines() do
-
       local filename = filepath:match("([^/]+)$") or filepath
-
-      -- Remove the final extension, if present.
-      local stem = filename:match("^(.*)%.[^%.]+$") or filename
-
+      local stem = filename:match("^(.*)%.[^%.]+$") or filename -- Remove the extension, if present.
       existing[stem:lower()] = true
     end
 
@@ -50,22 +43,11 @@ function factory() return function()
       return nil, "Could not complete the export-folder scan."
     end
 
-    return existing
-  end
-
-  -- Generate a filename stem that does not already exist.
-  local function make_nonconflicting_name(folder, requested_name)
-
-    local existing, err = get_existing_filename_stems(folder) ----------------------------------------------------------------------
-
-    if not existing then
-      return nil, err
-    end
-
     if not existing[requested_name:lower()] then
       return requested_name
     end
 
+    -- Increment the name with a -n (dash+number) until no file-name conflict remains:
     local n = 2
 
     while existing[(requested_name .. "-" .. n):lower()] do
