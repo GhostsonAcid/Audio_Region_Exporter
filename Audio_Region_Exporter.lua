@@ -169,21 +169,34 @@ function factory() return function()
       if file then
         local contents = file:read("*a")
         file:close()
+
         local line1 = contents:match("<ExportPreset%s+([^>]*)>") -- Capture for the line starting with "<ExportPreset".
         local line2 = contents:match("<ExportFormat%s+([^>]*)>") -- The "<ExportFormat" line contains an id to link later to
-        if line1 and line2 then                                             -- the appropriate/associated .format file (for ext. info).
+                                                                 -- the appropriate/associated .format file (for extension info).
+        if line1 and line2 then
+
           local export_preset_attributes = parse_xml_attributes(line1) -- Parse the current .preset chunks...
           local export_format_attributes = parse_xml_attributes(line2)
+
+          local format_ids = {} -- Keep track and save *multiple* .format ids, if present...
+
+          for attributes in contents:gmatch("<ExportFormat%s+([^>]*)>") do
+            local format_attributes = parse_xml_attributes(attributes)
+          
+            if format_attributes.id then
+              table.insert(format_ids, format_attributes.id)
+            end
+          end
 
           if export_preset_attributes.id and export_preset_attributes.name and export_format_attributes.id then
 
             table.insert(presets, { -- Insert/save the appropriate .preset data...
               preset_id = export_preset_attributes.id,
-              format_id = export_format_attributes.id,
+              format_ids = format_ids,
               name = export_preset_attributes.name,
               source = source,
               path = filepath,
-              extension = nil
+              formats = {}
             })
 
           end
@@ -193,7 +206,7 @@ function factory() return function()
 
     preset_pipe:close()
 
-    local extensions_by_format_id = {} -- Create another table for storing the exact extensions used during export.
+    local formats_by_id = {} -- Create another table for storing the exact extensions/name info. used during export.
 
     -- Initiate a second loop to gather and append *extension* data from the each .preset file's associated .format file:
     local format_command = "find " .. shell_quote(directory) .. " -type f -name '*.format' -print 2>/dev/null"
@@ -211,7 +224,12 @@ function factory() return function()
           local encoding_attributes = parse_xml_attributes(line2)
 
           if export_format_spec_attributes.id and encoding_attributes.extension then -- If the extension found/returned, then...
-            extensions_by_format_id[export_format_spec_attributes.id] = encoding_attributes.extension -- Save the extension.
+
+            formats_by_id[export_format_spec_attributes.id] = { -- Save the extension *and* name (-both used in the final popup).
+              name = export_format_spec_attributes.name,
+              extension = encoding_attributes.extension
+            }
+
           end
         end
       end
@@ -219,10 +237,16 @@ function factory() return function()
 
     format_pipe:close()
 
-    -- Initiate a final loop to append each appropriate extension (that will ultimately be used for export):
+    -- Initiate a final loop to append each appropriate extension/name (that will ultimately be used for export):
     for _, preset in ipairs(presets) do
       if preset.source == source then
-        preset.extension = extensions_by_format_id[preset.format_id]
+        for _, format_id in ipairs(preset.format_ids) do
+          local format = formats_by_id[format_id]
+    
+          if format then
+            table.insert(preset.formats, format)
+          end
+        end
       end
     end
 
@@ -469,11 +493,27 @@ function factory() return function()
       -- Actually execute the "quick"/"simple" export for this region:
       assert(exporter:run_export(), "Export failed for: " .. region:name()) -- Catch if it fails.
 
+      local filenames = {}
+
+      for _, format in ipairs(selected_preset.formats) do
+      
+        local filename = safe_name
+      
+        if #selected_preset.formats > 1 then -- Multiple .format files (and thus exports) were used/made.
+          filename = filename .. "_" .. format.name -- Append the appropriate '_(name)' inserted by
+        end                                         -- Ardour (during multi-file exporting), if any.
+      
+        filename = filename .. "." .. format.extension -- Append the appropriate extension used.
+
+        table.insert(filenames, filename)
+      
+      end
+
       -- Record any successful export:
       table.insert(completed_exports, {
           region = region:name(),
           track = target_track:name(), -- Probably won't use (e.g. in the final popup), but okay to store anyway for now.
-          filename = safe_name .. "." .. selected_preset.extension -- Append the appropriate extension used.
+          filenames = filenames
       })
 
       print(string.format("Exported region %d/%d: %s", index, #selected_regions, safe_name)) ----------------------------------
@@ -501,16 +541,26 @@ function factory() return function()
   -------------- Step 9: Manifest Final Popup --------------
   ----------------------------------------------------------
 
+  local total_files_exported = 0 -- A count of the total files exported (because some presets export multiple files).
+
+  for _, item in ipairs(completed_exports) do
+    total_files_exported = total_files_exported + #item.filenames
+  end
+
   local report =
     "Selected audio regions: " .. #selected_regions ..
     "\nSuccessfully exported: " .. #completed_exports ..
+    "\nFiles produced: " .. total_files_exported ..
     "\n\nExport Preset Used: " .. selected_preset_name ..
     "\nExport Destination Used: " .. selected_output_folder
 
   if #completed_exports > 0 then
-    report = report .. "\n\nExported files:\n\n"
+    report = report .. "\n\nExported files:\n"
+  
     for _, item in ipairs(completed_exports) do
-      report = report .. item.region .. " -> " .. item.filename .. "\n"
+      for _, filename in ipairs(item.filenames) do
+        report = report .. filename .. "\n"
+      end
     end
   end
 
