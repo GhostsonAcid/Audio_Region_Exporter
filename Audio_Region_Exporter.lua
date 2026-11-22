@@ -317,9 +317,9 @@ function factory() return function()
           {type = "heading", title = "Select an export preset and destination:"},
           {type = "dropdown", key = "preset_option", title = "Export Preset", values = dropdown_preset_values, default = dropdown_preset_labels[1]},
           {type = "folder", key = "folder", title = "Export Destination", path = Session:path()},
-          {type = "label", title = "Please note that this script exports audio from the Master bus.\n" .. 
-          "Therefore, any automation or plugins in your chain that currently effect\n" ..
-          "the selected audio will be reflected in the exported file(s).\n"},
+          {type = "label", title = "  Please note that this script exports audio from the Master bus.\n" .. -- Extra spaces to help center text.
+          "Therefore, any automation or plugins in your chain that currently\n" ..
+          " affect the selected audio will be reflected in the exported file(s).\n"}, -- Extra space to help center text.
           {type = "dropdown",
           key = "solo_option",
           title = "Soloing Option",
