@@ -19,8 +19,40 @@ function factory() return function()
     return "'" .. tostring(str):gsub("'", "'\\''") .. "'"
   end
 
+  -- Generate the expected output filenames for a given base name:
+  local function get_export_filenames(base_name, formats)
+
+    local extension_counts = {}
+
+    for _, format in ipairs(formats) do
+      local extension = format.extension:lower()
+      extension_counts[extension] = (extension_counts[extension] or 0) + 1
+    end
+
+    local filenames = {}
+
+    for _, format in ipairs(formats) do
+
+      local filename = base_name
+
+      -- Append an underscore and the format name (e.g. _Apple Music) when extensions
+      -- will be shared (e.g. four .wav exports will be exported).  Ardour will ultimately
+      -- do this in these cases, so we need to account for it when checking for existing files:
+      if extension_counts[format.extension:lower()] > 1 then -- With single file exports, Ardour will append nothing.
+        filename = filename .. "_" .. format.name
+      end
+
+      filename = filename .. "." .. format.extension -- Add the exact extension.
+
+      table.insert(filenames, filename)
+
+    end
+
+    return filenames
+  end
+
   -- Generate a filename stem that does not already exist.
-  local function make_nonconflicting_name(folder, requested_name)
+  local function make_nonconflicting_name(folder, requested_name, formats)
 
     local existing = {}
 
@@ -33,7 +65,7 @@ function factory() return function()
 
     for filepath in pipe:lines() do
       local filename = filepath:match("([^/]+)$") or filepath
-      local stem = filename:match("^(.*)%.[^%.]+$") or filename -- Remove the extension, if present.
+      local stem = filename:match("^(.*)%.[^%.]+$") or filename
       existing[stem:lower()] = true
     end
 
@@ -43,14 +75,29 @@ function factory() return function()
       return nil, "Could not complete the export-folder scan."
     end
 
-    if not existing[requested_name:lower()] then
+    -- Check every filename the selected preset is expected to *actually* produce:
+    local function name_is_available(base_name)
+
+      for _, filename in ipairs(get_export_filenames(base_name, formats)) do
+
+        local stem = filename:match("^(.*)%.[^%.]+$") or filename
+
+        if existing[stem:lower()] then
+          return false
+        end
+
+      end
+
+      return true
+    end
+
+    if name_is_available(requested_name) then
       return requested_name
     end
 
-    -- Increment the name with a -n (dash+number) until no file-name conflict remains:
     local n = 2
 
-    while existing[(requested_name .. "-" .. n):lower()] do
+    while not name_is_available(requested_name .. "-" .. n) do
       n = n + 1
     end
 
@@ -453,7 +500,7 @@ function factory() return function()
       region_name = region_name:gsub("[/\\:]", "_")
 
       -- Generate a collision-safe filename:
-      local safe_name = make_nonconflicting_name(selected_output_folder, region_name)
+      local safe_name = make_nonconflicting_name(selected_output_folder, region_name, selected_preset.formats)
 
       -- Calculate this region's timeline range:
       local start_sample = region:position():samples()
@@ -481,23 +528,7 @@ function factory() return function()
           (extension_counts[format.extension] or 0) + 1
       end
 
-      local filenames = {}
-
-      for _, format in ipairs(selected_preset.formats) do
-
-        local filename = safe_name
-
-        -- Append the format name only when another format uses
-        -- the same extension (to distinguish otherwise-conflicting filenames):
-        if extension_counts[format.extension] > 1 then
-          filename = filename .. "_" .. format.name
-        end
-
-        filename = filename .. "." .. format.extension
-
-        table.insert(filenames, filename)
-
-      end
+      local filenames = get_export_filenames(safe_name, selected_preset.formats)
 
       -- Record any successful export:
       table.insert(completed_exports, {
