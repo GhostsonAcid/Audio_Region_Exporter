@@ -37,7 +37,7 @@ function factory() return function()
 
       -- Append an underscore and the format name (e.g. _Apple Music) when extensions
       -- will be shared (e.g. four .wav exports will be exported).  Ardour will ultimately
-      -- do this in these cases, so we need to account for it when checking for existing files:
+      -- do this in these cases, so we need to account for it when checking for existing files, etc.:
       if extension_counts[format.extension:lower()] > 1 then -- With single file exports, Ardour will append nothing.
         filename = filename .. "_" .. format.name
       end
@@ -380,7 +380,7 @@ function factory() return function()
   end
 
   -- Establish the user's choices:
-  local selected_preset_id = dialog_result["preset_option"]
+  local selected_preset_id = dialog_result["preset_option"] -- Note that a proper .preset ID is required by simple_export, NOT a .preset name.
   local selected_output_folder = dialog_result["folder"]
   local selected_solo_option = dialog_result["solo_option"]
 
@@ -453,7 +453,7 @@ function factory() return function()
   -- Establish a table for completed export data:
   local completed_exports = {}
 
-  -- Establish the selected preset for extension appending later on:
+  -- Establish the selected preset for extension appending (etc.) later on:
   local selected_preset
 
   for _, preset in ipairs(presets) do
@@ -491,7 +491,7 @@ function factory() return function()
       end
 
       local region_name = region:name()
-      region_name = region_name:gsub("[/\\:]", "_")
+      region_name = region_name:gsub("[/\\:]", "_") -- Precautionary; -not even sure if \, /, or : can be added to a region's name. o___o
 
       -- Generate a collision-safe filename:
       local safe_name = make_nonconflicting_name(selected_output_folder, region_name, selected_preset.formats)
@@ -508,13 +508,14 @@ function factory() return function()
       exporter:set_preset(selected_preset_id)
       exporter:set_range(start_sample, end_sample)
 
-      -- Check output connection(s) (-not sure exactly what Ardour is looking for):
+      -- Check output connection(s) (-not sure exactly what Ardour is looking for, but alright):
       assert(exporter:check_outputs(), "Output validation failed for: " .. region:name()) -- Catch if there was an issue.
 
       -- Actually execute the "quick"/"simple" export for this region:
       assert(exporter:run_export(), "Export failed for: " .. region:name()) -- Catch if it fails.
 
-      -- Count how many formats use each extension:
+      -- Count how many formats use each extension...
+      -- Needed to determine accurate file-names used in the final popup:
       local extension_counts = {}
 
       for _, format in ipairs(selected_preset.formats) do
@@ -556,7 +557,7 @@ function factory() return function()
   -------------- Step 8: Manifest Final Popup --------------
   ----------------------------------------------------------
 
-  local total_files_exported = 0 -- A count of the total files exported (because some presets export multiple files).
+  local total_files_exported = 0 -- A count of the total files exported (-because some presets export *multiple* files).
 
   for _, item in ipairs(completed_exports) do
     total_files_exported = total_files_exported + #item.filenames
