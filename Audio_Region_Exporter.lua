@@ -531,7 +531,7 @@ function factory() return function()
         filenames = filenames
       })
 
-      print(string.format("Exported region %d/%d: %s", index, #selected_regions, safe_name)) ----------------------------------
+      print(string.format("Exported region %d/%d: %s", index, #selected_regions, region:name()))
 
     end
 
