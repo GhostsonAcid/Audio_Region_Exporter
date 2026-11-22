@@ -440,10 +440,8 @@ function factory() return function()
 
         -- Wait:
         assert(ARDOUR.LuaAPI.wait_for_process_callback(0, 2000), "Timed out waiting after clearing solos.")
-      end
 
-      -- Solo the current region's source track:
-      if selected_solo_option == "yes_solo" then
+        -- Solo the current region's source track:
         local target_solo = target_track:solo_control()
         Session:set_control(target_solo, 1, PBD.GroupControlDisposition.NoGroup)
 
