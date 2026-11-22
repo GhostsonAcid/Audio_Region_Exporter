@@ -167,9 +167,9 @@ function factory() return function()
     return
   end
 
-  ----------------------------------------------------------------------
-  -------------- Step 2: Discover Existing Export Presets --------------
-  ----------------------------------------------------------------------
+  -------------------------------------------------------------------------------------
+  -------------- Step 2: Discover Existing Export Preset and Format Data --------------
+  -------------------------------------------------------------------------------------
 
   local presets = {} -- Create a table to save preset IDs, user-shown names, and used file extensions...
 
@@ -452,9 +452,9 @@ function factory() return function()
     end
   end
 
-  ----------------------------------------------------------
-  -------------- Step 7: Initiate Export Loop --------------
-  ----------------------------------------------------------
+  ---------------------------------------------------------------
+  -------------- Step 7: Initiate Main Export Loop --------------
+  ---------------------------------------------------------------
 
   -- Establish a table for completed export data:
   local completed_exports = {}
@@ -559,7 +559,7 @@ function factory() return function()
   end)
   
   ----------------------------------------------------------
-  -------------- Step 9: Manifest Final Popup --------------
+  -------------- Step 8: Manifest Final Popup --------------
   ----------------------------------------------------------
 
   local total_files_exported = 0 -- A count of the total files exported (because some presets export multiple files).
