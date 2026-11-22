@@ -493,27 +493,37 @@ function factory() return function()
       -- Actually execute the "quick"/"simple" export for this region:
       assert(exporter:run_export(), "Export failed for: " .. region:name()) -- Catch if it fails.
 
+      -- Count how many formats use each extension:
+      local extension_counts = {}
+
+      for _, format in ipairs(selected_preset.formats) do
+        extension_counts[format.extension] =
+          (extension_counts[format.extension] or 0) + 1
+      end
+
       local filenames = {}
 
       for _, format in ipairs(selected_preset.formats) do
-      
+
         local filename = safe_name
-      
-        if #selected_preset.formats > 1 then -- Multiple .format files (and thus exports) were used/made.
-          filename = filename .. "_" .. format.name -- Append the appropriate '_(name)' inserted by
-        end                                         -- Ardour (during multi-file exporting), if any.
-      
-        filename = filename .. "." .. format.extension -- Append the appropriate extension used.
+
+        -- Append the format name only when another format uses
+        -- the same extension (to distinguish otherwise-conflicting filenames):
+        if extension_counts[format.extension] > 1 then
+          filename = filename .. "_" .. format.name
+        end
+
+        filename = filename .. "." .. format.extension
 
         table.insert(filenames, filename)
-      
+
       end
 
       -- Record any successful export:
       table.insert(completed_exports, {
-          region = region:name(),
-          track = target_track:name(), -- Probably won't use (e.g. in the final popup), but okay to store anyway for now.
-          filenames = filenames
+        region = region:name(),
+        track = target_track:name(),
+        filenames = filenames
       })
 
       print(string.format("Exported region %d/%d: %s", index, #selected_regions, safe_name)) ----------------------------------
