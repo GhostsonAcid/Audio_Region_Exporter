@@ -8,7 +8,7 @@
 
 - Works with audio regions of all kinds.
 - Exports each selected region to its own, single file, one after the next.
-- Select from any of the available Preset options.
+- Select from any of the available export preset options.
 - Select the location to export the files to.
 - Can select regions across _multiple tracks._
 - Automatically solos the appropriate track for each region during export (-although this can be disabled if desired).
