@@ -10,13 +10,27 @@
 - Exports each selected region to its own, single file, one after the next.
 - Select from any of the available Preset options.
 - Select the location to export the files to.
-- Automatically solos the appropriate track for each region selected (-although this can be disabled if desired).
+- Can select regions across _multiple tracks._
+- Automatically solos the appropriate track for each region during export (-although this can be disabled if desired).
+- Restores original project solo state after exporting in complete.
 - Automatically prevents file erasure by checking for existing file-names in the destination.
 - Reports export data in a final popup window.
 
 --------------------------------------------------
 
 (~Example usage coming soon...)
+
+--------------------------------------------------
+
+### Other Comments
+
+In deciding what Lua binding(s) to use for the core of this script, there were a few possibilities...
+
+- Ardour can _bounce_ regions (with or without processing).  However, this leads to the generation of _multiple mono files_ (in the case of bouncing a region that's stereo, or 3+ channels).  This is fine for _Ardour,_ typically, as these bounced mono files are intended to exist _'under the hood',_ for Ardour's use only.  But for our purposes, where we want _single file_ exports, bouncing is therefore not ideal.
+- Then we have various bindings like _export_audio, export_range, export_selection, etc.,_ -all of which seemingly take no arguments and simply open the main, corresponding GUIs for exporting audio.  So, in our case, unless someone wants to deal with a single GUI _per region,_ these are not viable options either.
+- Luckily, however, _simple_export_ exists, which allows our script to bypass the main export GUI altogether, and run export operations in sequence, quickly.  Thus, the "ARDOUR.SimpleExport" class is exactly what's best for this script!
+
+As the main GUI for _Audio Region Exporter_ states, this script exports the full line of potential processing from region to → Master bus.  This may include track/bus plugins, fader automation, etc..  If this is not desirable, then for now, please ensure that all plugins and automation are disabled along the chain from the regions you wish to export to the Master bus. (Note that it is likely possible (although probably very complicated) to have this script automatically disable all plugins/automation from region to → Master, export the region, then re-enabled the original plugins/automation.  For now, however, I think that's too much work to implement. :P)
 
 --------------------------------------------------
 
