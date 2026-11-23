@@ -18,7 +18,9 @@
 
 --------------------------------------------------
 
-(~Example usage coming soon...)
+### Example Usage:
+
+![Audio Region Exporter, Demo 1](https://github.com/GhostsonAcid/Audio_Region_Exporter/blob/main/Images/Audio%20Region%20Exporter%2C%20Demo%201.gif)
 
 --------------------------------------------------
 
