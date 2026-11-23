@@ -34,6 +34,8 @@ In deciding what Lua binding(s) to use for the core of this script, there were a
 
 As the main GUI for _Audio Region Exporter_ states, this script exports the full line of potential processing from region to → Master bus.  This may include track/bus plugins, fader automation, etc..  If this is not desirable, then for now, please ensure that all plugins and automation are disabled along the chain from the regions you wish to export to the Master bus. (Note that it is likely possible (although probably very complicated) to have this script automatically disable all plugins/automation from region to → Master, export the region, then re-enabled the original plugins/automation.  For now, however, I think that's too much work to implement. :P)
 
+-Tested on macOS (Mojave), Ubuntu GNU/Linux (briefly), and Ardour 9.10.
+
 --------------------------------------------------
 
 ## Installation
