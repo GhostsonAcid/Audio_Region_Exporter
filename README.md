@@ -10,9 +10,9 @@
 - Exports each selected region to its own, single file, one after the next.
 - Select from any of the available export preset options.
 - Select the location to export the files to.
-- Can select regions across _multiple tracks._
+- Can select and export regions across _multiple tracks._
 - Automatically solos the appropriate track for each region during export (-although this can be disabled if desired).
-- Restores original project solo state after exporting in complete.
+- Restores original project solo state after exporting is complete.
 - Automatically prevents file erasure by checking for existing file-names in the destination.
 - Reports export data in a final popup window.
 
@@ -25,6 +25,8 @@
 --------------------------------------------------
 
 ### Other Comments
+
+Thanks to user Victor (@svictor) on the Ardour forum for recommending this functionality, particularly the "dérusher" approach that involves cutting longer recordings into smaller ones. (Relevant post: https://discourse.ardour.org/t/bounce-stereo-region-to-stereo-file/113820)
 
 In deciding what Lua binding(s) to use for the core of this script, there were a few possibilities...
 
